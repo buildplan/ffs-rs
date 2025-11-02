@@ -29,12 +29,13 @@ RUN virtualenv venv \
 # Stage 2: Runtime
 FROM debian:testing-slim
 
-# Install runtime dependencies
+# Install runtime dependencies - includes curl for healthcheck
 RUN apt-get update && apt-get install -y --no-install-recommends \
     default-mysql-client \
     python3 \
     ca-certificates \
     libcurl4 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
