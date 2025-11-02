@@ -1,0 +1,53 @@
+services:
+  mariadb:
+    image: linuxserver/mariadb:latest
+    container_name: firefox_mariadb
+    restart: unless-stopped
+    environment:
+      PUID: 1000
+      PGID: 1000
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_USER: sync
+      MYSQL_DATABASE: syncstorage_rs
+      TZ: UTC
+    volumes:
+      - ./mariadb_data:/config
+      - ./data/initdb.d:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  syncserver:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: firefox_syncserver
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      SYNC_URL: ${SYNC_URL}
+      SYNC_CAPACITY: ${SYNC_CAPACITY:-10}
+      SYNC_MASTER_SECRET: ${SYNC_MASTER_SECRET}
+      METRICS_HASH_SECRET: ${METRICS_HASH_SECRET}
+      LOGLEVEL: ${LOGLEVEL:-warn}
+      SYNC_SYNCSTORAGE_DATABASE_URL: mysql://sync:${MYSQL_PASSWORD}@mariadb:3306/syncstorage_rs
+      SYNC_TOKENSERVER_DATABASE_URL: mysql://sync:${MYSQL_PASSWORD}@mariadb:3306/tokenserver_rs
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./config:/config
+    networks:
+      default:
+        aliases:
+          - syncserver
+
+networks:
+  default:
+    name: ff-sync_default
