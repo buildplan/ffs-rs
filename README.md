@@ -1,7 +1,7 @@
 # Firefox Sync Server (syncstorage-rs)
 
 [![Docker](https://github.com/buildplan/ffs-rs/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/buildplan/ffs-rs/actions/workflows/docker-publish.yml)
-![License: MPL-2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)
+![License: MPL-2.0](https://img.shields.io/badge/License-MPL%202.0-blue.svg)
 
 Self-hosted Mozilla Firefox Sync Storage server running on Docker with MariaDB. Docker image with multi-architecture support, automated CI/CD.
 
