@@ -283,11 +283,13 @@ docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
 
 ## Tips and pitfalls
 
-* Always use mariadb client inside the container; mysql is deprecated in this image.
-* When running multi-line SQL, prefer a single quoted string or a heredoc to avoid shell parsing issues:
+* Always use mariadb inside the container; mysql is deprecated in this image.
+* When sending SQL via stdin (heredoc or pipe), add -T to disable TTY allocation.
+
+Heredoc (multi-line SQL):
 
 ```bash
-docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" <<'SQL'
+docker compose exec -T firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" <<'SQL'
 USE syncstorage_rs;
 SELECT c.name, COUNT(*) AS bso_count
   FROM bso b JOIN collections c ON c.id = b.collection
@@ -296,4 +298,19 @@ SELECT c.name, COUNT(*) AS bso_count
 SQL
 ```
 
-* If any query errors on column names, run DESCRIBE on the table to confirm fields and adjust.
+One-liner via pipe:
+
+```bash
+echo "USE syncstorage_rs; SELECT c.name, COUNT(*) AS bso_count FROM bso b JOIN collections c ON c.id = b.collection GROUP BY c.name ORDER BY bso_count DESC;" \
+| docker compose exec -T firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}"
+```
+
+* If any query errors on column names, run DESCRIBE on the table to confirm fields and adjust:
+
+```bash
+docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e "DESCRIBE syncstorage_rs.user_collections;"
+```
+
+```bash
+docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e "DESCRIBE syncstorage_rs.bso;"
+```
