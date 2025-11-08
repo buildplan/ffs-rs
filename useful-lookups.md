@@ -7,10 +7,14 @@ Tip: prefer mariadb over mysql inside the linuxserver/mariadb container.
 ```bash
 # Shell into container
 docker compose exec firefox-mariadb bash
+```
 
+```bash
 # Connect non-interactively (examples below use this form)
 docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e "SELECT 1;"
+```
 
+```bash
 # Or interactive
 docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}"
 ```
