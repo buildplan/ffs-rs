@@ -423,18 +423,31 @@ services:
 
 ### Mobile (iOS/Android)
 
-**Android:**
-1. Open Firefox
-2. Menu → Settings → Sync
-3. Enter custom server: `https://sync.example.com`
-4. Sign in
+#### Android
 
-**iOS:**
-1. Open Firefox
-2. Menu (3 dots) → Settings
-3. Accounts & Sync → Sync Settings
-4. Custom Sync Server: `https://sync.example.com`
-5. Sign in
+1. Open Firefox for Android
+2. Tap the menu (⋮) → **Settings**
+3. Scroll down and tap **About Firefox**
+4. **Tap the Firefox logo 5 times** - you'll see a "Debug menu enabled" notification
+5. Go back to **Settings** (you'll now see **Sync Debug** near the top, under "Account")
+6. Tap **Sync Debug**
+7. Enable **Use Custom Sync Server**
+8. Enter your sync server URL: `https://sync.example.com/token/1.0/sync/1.5`
+10. Go back to main Settings and sign in to your Firefox Account
+
+#### iOS
+
+**Status:** Custom sync server configuration on Firefox for iOS requires the debug menu, which may have limited support in recent versions.
+
+**To attempt enabling debug mode:**
+
+1. Open Firefox for iOS
+2. Tap menu (☰) → **Settings**
+3. Tap **About Firefox**
+4. Tap the version number **5 times**
+5. Look for **Advanced Sync Settings** or similar debug options
+
+> **Note:** If debug menu doesn't appear, iOS custom sync server support may be unavailable in your Firefox version. Check the [Firefox iOS GitHub repository](https://github.com/mozilla-mobile/firefox-ios) for the latest status on custom sync server support.
 
 ---
 
@@ -619,6 +632,15 @@ rm -f /backups/sync-*.sql
 3. HTTPS certificate is valid: `curl -v https://sync.example.com/__heartbeat__`
 4. Firewall rules allow traffic
 5. Server logs: `docker compose logs syncserver`
+
+### Going back to default Firefox sync
+
+1. Go to Firefox `about:config`
+2. Search for `identity.sync.tokenserver.uri`
+3. Set value to `https://token.services.mozilla.com/1.0/sync/1.5`
+4. Sign-out of Firefox account
+5. Restart Firefox
+6. Go to **Settings** → **Sync** and sign in again
 
 ---
 
