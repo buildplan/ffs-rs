@@ -45,6 +45,9 @@ docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e "US
 
 ```bash
 docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e "DESCRIBE syncstorage_rs.user_collections;"
+```
+
+```bash
 docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e "DESCRIBE syncstorage_rs.bso;"
 ```
 
