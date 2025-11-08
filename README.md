@@ -613,9 +613,17 @@ SQL
 ## Resources
 
 - syncstorage-rs — [https://github.com/mozilla-services/syncstorage-rs](https://github.com/mozilla-services/syncstorage-rs)
+- Mozilla Docs - [https://mozilla-services.readthedocs.io/en/latest/howtos/run-sync-1.5.html](https://mozilla-services.readthedocs.io/en/latest/howtos/run-sync-1.5.html)
 - Firefox Sync — [https://support.mozilla.org/en-US/kb/how-do-i-set-up-firefox-sync](https://support.mozilla.org/en-US/kb/how-do-i-set-up-firefox-sync)
 - Docker — [https://docs.docker.com](https://docs.docker.com)
 - MariaDB — [https://mariadb.com/docs/](https://mariadb.com/docs/)
+- Nginx - [https://nginx.org/en/docs/beginners_guide.html](https://nginx.org/en/docs/beginners_guide.html)
+- Pangolin - [https://docs.pangolin.net/manage/resources/targets](https://docs.pangolin.net/manage/resources/targets)
+- Guides
+  - [https://blog.diego.dev/posts/firefox-sync-server/](https://blog.diego.dev/posts/firefox-sync-server/)
+  - [https://www.kyzer.me.uk/syncserver/](https://www.kyzer.me.uk/syncserver/)
+  - [https://thesmarthomejourney.com/2023/03/18/self-hosting-firefox-sync/](https://thesmarthomejourney.com/2023/03/18/self-hosting-firefox-sync/)
+  - [https://news.ycombinator.com/item?id=43214294](https://news.ycombinator.com/item?id=43214294)
 
 -----
 
