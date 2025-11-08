@@ -2,12 +2,12 @@
 
 Applies to this setup:
 
-- Container names: firefox-mariadb, firefox-syncserver
-- Databases: syncstorage_rs, tokenserver_rs
-- Tables present:
-    - syncstorage_rs: bso, collections, user_collections, batch_uploads, batch_upload_items
-    - tokenserver_rs: users, nodes, services
-- Client: mariadb (preferred over mysql)
+* Container names: firefox-mariadb, firefox-syncserver
+* Databases: syncstorage_rs, tokenserver_rs
+* Tables present:
+  * syncstorage_rs: bso, collections, user_collections, batch_uploads, batch_upload_items
+  * tokenserver_rs: users, nodes, services
+* Client: mariadb (preferred over mysql)
 
 Tip: Use mariadb in the linuxserver/mariadb container. Supply the password via environment variable MYSQL_PASSWORD.
 
@@ -27,7 +27,6 @@ docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e "SE
 # Interactive
 docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}"
 ```
-
 
 ## Schema discovery
 
@@ -104,7 +103,6 @@ docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
    FROM tokenserver_rs.nodes;"
 ```
 
-
 -----
 
 ## Syncstorage (collections, BSOs, activity)
@@ -139,11 +137,13 @@ docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
  ORDER BY bso_count DESC;"
 ```
 
-* Recent BSOs with collection name
+* Recent BSOs with collection name (human-readable time)
 
 ```bash
 docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
-"SELECT b.id, c.name AS collection, b.modified
+"SELECT b.id, c.name AS collection,
+        FROM_UNIXTIME(b.modified/1000) AS modified_ts,
+        b.modified AS modified_ms
    FROM syncstorage_rs.bso b
    JOIN syncstorage_rs.collections c ON c.id = b.collection
  ORDER BY b.modified DESC
@@ -154,7 +154,9 @@ docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
 
 ```bash
 docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
-"SELECT b.id, b.modified
+"SELECT b.id,
+        FROM_UNIXTIME(b.modified/1000) AS modified_ts,
+        b.modified AS modified_ms
    FROM syncstorage_rs.bso b
    JOIN syncstorage_rs.collections c ON c.id = b.collection
   WHERE c.name = 'history'
@@ -162,16 +164,18 @@ docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
   LIMIT 20;"
 ```
 
-
 -----
 
 ## Per-user collection state
 
-* Recent per-user per-collection last_modified
+* Recent per-user per-collection last_modified (human-readable time)
 
 ```bash
 docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
-"SELECT uc.userid, c.name AS collection, uc.last_modified
+"SELECT uc.userid, c.name AS collection,
+        FROM_UNIXTIME(uc.last_modified/1000) AS modified_ts,
+        uc.last_modified AS modified_ms,
+        uc.count AS bso_count, uc.total_bytes
    FROM syncstorage_rs.user_collections uc
    JOIN syncstorage_rs.collections c ON c.id = uc.collection
  ORDER BY uc.last_modified DESC
@@ -182,7 +186,9 @@ docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
 
 ```bash
 docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
-"SELECT uc.userid, c.name AS collection, uc.last_modified
+"SELECT uc.userid, c.name AS collection,
+        FROM_UNIXTIME(uc.last_modified/1000) AS modified_ts,
+        uc.last_modified AS modified_ms
    FROM syncstorage_rs.user_collections uc
    JOIN syncstorage_rs.collections c ON c.id = uc.collection
   WHERE c.name = 'bookmarks'
@@ -210,32 +216,68 @@ docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
  ORDER BY userid;"
 ```
 
-
 -----
 
 ## Batch uploads
 
-* Recent batches
+Note: These tables may be empty unless clients used server-side multi-part uploads. If empty, use “Recent BSOs” and “Per-user collection state” to inspect activity.
+
+Your schema:
+
+* batch_uploads(batch BIGINT, userid BIGINT, collection INT)
+* batch_upload_items(batch BIGINT, userid BIGINT, id VARCHAR(64), sortindex INT, payload MEDIUMTEXT, payload_size INT, ttl_offset INT)
+* Recent batches (by batch id, with item counts)
 
 ```bash
 docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
-"SELECT id, user_id, started_at, finished_at, error
-   FROM syncstorage_rs.batch_uploads
- ORDER BY started_at DESC
+"SELECT bu.batch,
+        bu.userid,
+        c.name AS collection,
+        COALESCE(COUNT(bi.id), 0) AS items
+   FROM syncstorage_rs.batch_uploads bu
+   LEFT JOIN syncstorage_rs.batch_upload_items bi
+          ON bi.batch = bu.batch AND bi.userid = bu.userid
+   JOIN syncstorage_rs.collections c
+          ON c.id = bu.collection
+ GROUP BY bu.batch, bu.userid, c.name
+ ORDER BY bu.batch DESC
  LIMIT 20;"
 ```
 
-* Items for a specific batch (replace BATCH_ID)
+* Batches for a specific user (discover batch ids)
 
 ```bash
-BATCH_ID=1
+USERID=4
 docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
-"SELECT item_id, collection, size
+"SELECT bu.batch, c.name AS collection,
+        (SELECT COUNT(*) FROM syncstorage_rs.batch_upload_items bi
+          WHERE bi.batch = bu.batch AND bi.userid = bu.userid) AS item_count
+   FROM syncstorage_rs.batch_uploads bu
+   JOIN syncstorage_rs.collections c ON c.id = bu.collection
+  WHERE bu.userid = ${USERID}
+  ORDER BY bu.batch DESC;"
+```
+
+* Items for a batch (set BATCH and USERID)
+
+```bash
+BATCH=1
+USERID=4
+docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
+"SELECT id, sortindex, payload_size, ttl_offset
    FROM syncstorage_rs.batch_upload_items
-  WHERE batch_id = ${BATCH_ID}
+  WHERE batch = ${BATCH} AND userid = ${USERID}
+  ORDER BY id
   LIMIT 50;"
 ```
 
+* Show raw rows (quick probe)
+
+```bash
+docker compose exec firefox-mariadb mariadb -u sync -p"${MYSQL_PASSWORD}" -e \
+"SELECT * FROM syncstorage_rs.batch_uploads LIMIT 5;
+ SELECT * FROM syncstorage_rs.batch_upload_items LIMIT 5;"
+```
 
 -----
 
