@@ -120,8 +120,15 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
-
+  
       - name: Verify image signature
         if: github.event_name != 'pull_request'
+        env:
+          COSIGN_EXPERIMENTAL: "true"
         run: |
-          echo "${{ steps.meta.outputs.tags }}" | head -n 1 | xargs -I {} cosign verify {}@${{ steps.build.outputs.digest }}
+          IMAGE="${{ fromJSON(steps.meta.outputs.json).tags[0] }}@${{ steps.build.outputs.digest }}"
+
+          cosign verify \
+          --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/docker-publish.yml@refs/heads/main" \
+          --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+          "${IMAGE}"
