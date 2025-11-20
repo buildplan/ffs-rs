@@ -69,10 +69,14 @@ COPY --from=builder --chown=syncserver:syncserver /app/tokenserver-db /app/token
 # Copy entrypoint script
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
 
-# Security labels for traceability
-LABEL org.opencontainers.image.source="https://github.com/buildplan/ffs-rs"
-LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
-LABEL maintainer="buildplan"
+# Security / metadata labels for traceability and GHCR UI
+LABEL org.opencontainers.image.title="ffs-rs" \
+      org.opencontainers.image.description="Firefox Sync Server (syncstorage-rs) for self-hosting" \
+      org.opencontainers.image.source="https://github.com/buildplan/ffs-rs" \
+      org.opencontainers.image.url="https://github.com/buildplan/ffs-rs" \
+      org.opencontainers.image.licenses="MPL-2.0" \
+      org.opencontainers.image.revision="${GIT_COMMIT}" \
+      maintainer="buildplan"
 
 # Verify binary compatibility
 RUN ldd /usr/local/bin/syncserver > /dev/null 2>&1 || (echo "Binary compatibility check failed" && exit 1)
