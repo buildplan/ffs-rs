@@ -33,6 +33,9 @@ RUN virtualenv venv \
 # Runtime Stage - Using Debian 13 Trixie (stable)
 FROM debian:trixie-slim AS runtime
 
+# Re-declare ARG so it is defined in this stage for LABEL
+ARG GIT_COMMIT=1dc421474df2a4ee973d529534cd0eb7189d58ce
+
 # Install runtime dependencies with cleanup
 RUN apt-get update && apt-get install -y --no-install-recommends \
     default-mysql-client \
