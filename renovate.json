@@ -2,5 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>buildplan/renovate-config"
+  ],
+  "packageRules": [
+    {
+      "description": "Disable updates for the Rust Docker image to maintain syncstorage-rs compatibility",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["rust"],
+      "enabled": false
+    }
   ]
 }
