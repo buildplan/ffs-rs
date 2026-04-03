@@ -1,5 +1,5 @@
 # Firefox Sync Server - Builder Stage
-FROM rust:latest AS builder
+FROM rust:1.92 AS builder
 
 # This specific commit is intentionally hardcoded as newer versions have compatibility issues
 ARG GIT_COMMIT=1dc421474df2a4ee973d529534cd0eb7189d58ce
